@@ -48,6 +48,9 @@ logs/
 data/lakehouse/
 data/temp/
 
+# Raw sample data (reproducible via src/ingestion/generate_sample_data.py)
+data/raw/*.csv
+
 # Test Cache
 .pytest_cache/
 .coverage
