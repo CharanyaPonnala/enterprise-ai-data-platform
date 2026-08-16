@@ -5,8 +5,9 @@
 .DESCRIPTION
     PySpark on Windows needs winutils.exe/hadoop.dll (for local filesystem permission checks
     during Delta writes) and a loopback SPARK_LOCAL_IP (to avoid corporate network/VPN sockets
-    blocking Spark's driver bind). This script sets those up automatically, then executes
-    src\ingestion\bronze_ingestion.py using the project's .venv.
+    blocking Spark's driver bind). This script sets those up automatically, then runs
+    src\ingestion\bronze_ingestion.py as a module (python -m) from the repo root using the
+    project's .venv, so that its `from src...` imports resolve correctly.
 
     NOTE ON THIRD-PARTY BINARIES: winutils.exe/hadoop.dll are not published by the Apache Hadoop
     project for Windows, so this script fetches them from the community-maintained
@@ -63,5 +64,11 @@ if (-not (Test-Path $venvPython)) {
     throw "Virtual environment not found at $venvPython. Create it first (e.g. python -m venv .venv; .\.venv\Scripts\pip install -r requirements.txt)."
 }
 
-$scriptPath = Join-Path $repoRoot "src\ingestion\bronze_ingestion.py"
-& $venvPython $scriptPath
+# Run as a module (not a plain script) so `src.config.schemas` and other
+# project-relative imports resolve correctly, with cwd set to the repo root.
+Push-Location $repoRoot
+try {
+    & $venvPython -m src.ingestion.bronze_ingestion
+} finally {
+    Pop-Location
+}
